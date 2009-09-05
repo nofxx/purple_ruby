@@ -51,72 +51,72 @@
 #define PURPLE_GLIB_WRITE_COND (G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL)
 
 typedef struct _PurpleGLibIOClosure {
-	PurpleInputFunction function;
-	guint result;
-	gpointer data;
+  PurpleInputFunction function;
+  guint result;
+  gpointer data;
 } PurpleGLibIOClosure;
 
 static void purple_glib_io_destroy(gpointer data)
 {
-	g_free(data);
+  g_free(data);
 }
 
 static gboolean purple_glib_io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
-	PurpleGLibIOClosure *closure = data;
-	PurpleInputCondition purple_cond = 0;
+  PurpleGLibIOClosure *closure = data;
+  PurpleInputCondition purple_cond = 0;
 
-	if (condition & PURPLE_GLIB_READ_COND)
-		purple_cond |= PURPLE_INPUT_READ;
-	if (condition & PURPLE_GLIB_WRITE_COND)
-		purple_cond |= PURPLE_INPUT_WRITE;
+  if (condition & PURPLE_GLIB_READ_COND)
+    purple_cond |= PURPLE_INPUT_READ;
+  if (condition & PURPLE_GLIB_WRITE_COND)
+    purple_cond |= PURPLE_INPUT_WRITE;
 
-	closure->function(closure->data, g_io_channel_unix_get_fd(source),
-			  purple_cond);
+  closure->function(closure->data, g_io_channel_unix_get_fd(source),
+        purple_cond);
 
-	return TRUE;
+  return TRUE;
 }
 
 static guint glib_input_add(gint fd, PurpleInputCondition condition, PurpleInputFunction function,
-							   gpointer data)
+                 gpointer data)
 {
-	PurpleGLibIOClosure *closure = g_new0(PurpleGLibIOClosure, 1);
-	GIOChannel *channel;
-	GIOCondition cond = 0;
-	
-	closure->function = function;
-	closure->data = data;
+  PurpleGLibIOClosure *closure = g_new0(PurpleGLibIOClosure, 1);
+  GIOChannel *channel;
+  GIOCondition cond = 0;
+  
+  closure->function = function;
+  closure->data = data;
 
-	if (condition & PURPLE_INPUT_READ)
-		cond |= PURPLE_GLIB_READ_COND;
-	if (condition & PURPLE_INPUT_WRITE)
-		cond |= PURPLE_GLIB_WRITE_COND;
+  if (condition & PURPLE_INPUT_READ)
+    cond |= PURPLE_GLIB_READ_COND;
+  if (condition & PURPLE_INPUT_WRITE)
+    cond |= PURPLE_GLIB_WRITE_COND;
 
-	channel = g_io_channel_unix_new(fd);
-	closure->result = g_io_add_watch_full(channel, G_PRIORITY_DEFAULT, cond,
-					      purple_glib_io_invoke, closure, purple_glib_io_destroy);
+  channel = g_io_channel_unix_new(fd);
+  closure->result = g_io_add_watch_full(channel, G_PRIORITY_DEFAULT, cond,
+                purple_glib_io_invoke, closure, purple_glib_io_destroy);
 
-	g_io_channel_unref(channel);
-	return closure->result;
+  g_io_channel_unref(channel);
+  return closure->result;
 }
 
 static PurpleEventLoopUiOps glib_eventloops = 
 {
-	g_timeout_add,
-	g_source_remove,
-	glib_input_add,
-	g_source_remove,
-	NULL,
+  g_timeout_add,
+  g_source_remove,
+  glib_input_add,
+  g_source_remove,
+  NULL,
 #if GLIB_CHECK_VERSION(2,14,0)
-	g_timeout_add_seconds,
+  g_timeout_add_seconds,
 #else
-	NULL,
+  NULL,
 #endif
 
-	/* padding */
-	NULL,
-	NULL,
-	NULL
+  /* padding */
+  NULL,
+  NULL,
+  NULL
 };
 
 static VALUE cPurpleRuby;
@@ -140,8 +140,8 @@ VALUE new_buddy_handler = Qnil;
 
 extern void
 finch_connection_report_disconnect(PurpleConnection *gc, PurpleConnectionError reason,
-		const char *text);
-		
+    const char *text);
+    
 extern void finch_connections_init();
 
 VALUE inspect_rb_obj(VALUE obj)
@@ -198,9 +198,9 @@ void report_disconnect(PurpleConnection *gc, PurpleConnectionError reason, const
 }
 
 static void* notify_message(PurpleNotifyMsgType type, 
-	const char *title,
-	const char *primary, 
-	const char *secondary)
+  const char *title,
+  const char *primary, 
+  const char *secondary)
 {
   if (notify_message_handler != Qnil) {
     VALUE args[4];
@@ -216,8 +216,8 @@ static void* notify_message(PurpleNotifyMsgType type,
 }
 
 static void write_conv(PurpleConversation *conv, const char *who, const char *alias,
-			const char *message, PurpleMessageFlags flags, time_t mtime)
-{	
+      const char *message, PurpleMessageFlags flags, time_t mtime)
+{ 
   if (im_handler != Qnil) {
     PurpleAccount* account = purple_conversation_get_account(conv);
     if (strcmp(purple_account_get_protocol_id(account), "prpl-msn") == 0 &&
@@ -244,40 +244,40 @@ static void write_conv(PurpleConversation *conv, const char *who, const char *al
 
 static PurpleConversationUiOps conv_uiops = 
 {
-	NULL,                      /* create_conversation  */
-	NULL,                      /* destroy_conversation */
-	NULL,                      /* write_chat           */
-	NULL,                      /* write_im             */
-	write_conv,           /* write_conv           */
-	NULL,                      /* chat_add_users       */
-	NULL,                      /* chat_rename_user     */
-	NULL,                      /* chat_remove_users    */
-	NULL,                      /* chat_update_user     */
-	NULL,                      /* present              */
-	NULL,                      /* has_focus            */
-	NULL,                      /* custom_smiley_add    */
-	NULL,                      /* custom_smiley_write  */
-	NULL,                      /* custom_smiley_close  */
-	NULL,                      /* send_confirm         */
-	NULL,
-	NULL,
-	NULL,
-	NULL
+  NULL,                      /* create_conversation  */
+  NULL,                      /* destroy_conversation */
+  NULL,                      /* write_chat           */
+  NULL,                      /* write_im             */
+  write_conv,           /* write_conv           */
+  NULL,                      /* chat_add_users       */
+  NULL,                      /* chat_rename_user     */
+  NULL,                      /* chat_remove_users    */
+  NULL,                      /* chat_update_user     */
+  NULL,                      /* present              */
+  NULL,                      /* has_focus            */
+  NULL,                      /* custom_smiley_add    */
+  NULL,                      /* custom_smiley_write  */
+  NULL,                      /* custom_smiley_close  */
+  NULL,                      /* send_confirm         */
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
 
 static PurpleConnectionUiOps connection_ops = 
 {
-	NULL, /* connect_progress */
-	NULL, /* connected */
-	NULL, /* disconnected */
-	NULL, /* notice */
-	NULL,
-	NULL, /* network_connected */
-	NULL, /* network_disconnected */
-	report_disconnect,
-	NULL,
-	NULL,
-	NULL
+  NULL, /* connect_progress */
+  NULL, /* connected */
+  NULL, /* disconnected */
+  NULL, /* notice */
+  NULL,
+  NULL, /* network_connected */
+  NULL, /* network_disconnected */
+  report_disconnect,
+  NULL,
+  NULL,
+  NULL
 };
 
 static void* request_action(const char *title, const char *primary, const char *secondary,
@@ -290,17 +290,17 @@ static void* request_action(const char *title, const char *primary, const char *
                             va_list actions)
 {
   if (request_handler != Qnil) {
-	  VALUE args[4];
+    VALUE args[4];
     args[0] = rb_str_new2(NULL == title ? "" : title);
     args[1] = rb_str_new2(NULL == primary ? "" : primary);
     args[2] = rb_str_new2(NULL == secondary ? "" : secondary);
     args[3] = rb_str_new2(NULL == who ? "" : who);
     check_callback(request_handler, "request_handler");
     VALUE v = rb_funcall2(request_handler, CALL, 4, args);
-	  
-	  if (v != Qnil && v != Qfalse) {
-	    /*const char *text =*/ va_arg(actions, const char *);
-	    GCallback ok_cb = va_arg(actions, GCallback);
+    
+    if (v != Qnil && v != Qfalse) {
+      /*const char *text =*/ va_arg(actions, const char *);
+      GCallback ok_cb = va_arg(actions, GCallback);
       ((PurpleRequestActionCb)ok_cb)(user_data, default_action);
     }
   }
@@ -310,17 +310,17 @@ static void* request_action(const char *title, const char *primary, const char *
 
 static PurpleRequestUiOps request_ops =
 {
-	NULL,           /*request_input*/
-	NULL,           /*request_choice*/
-	request_action, /*request_action*/
-	NULL,           /*request_fields*/
-	NULL,           /*request_file*/
-	NULL,           /*close_request*/
-	NULL,           /*request_folder*/
-	NULL,
-	NULL,
-	NULL,
-	NULL
+  NULL,           /*request_input*/
+  NULL,           /*request_choice*/
+  request_action, /*request_action*/
+  NULL,           /*request_fields*/
+  NULL,           /*request_file*/
+  NULL,           /*close_request*/
+  NULL,           /*request_folder*/
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
 
 static PurpleNotifyUiOps notify_ops =
@@ -342,16 +342,16 @@ static PurpleNotifyUiOps notify_ops =
 
 static PurpleCoreUiOps core_uiops = 
 {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
 
-	/* padding */
-	NULL,
-	NULL,
-	NULL,
-	NULL
+  /* padding */
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
 
 //I have tried to detect Ctrl-C using ruby's trap method,
@@ -361,9 +361,9 @@ static void sighandler(int sig)
 {
   switch (sig) {
   case SIGINT:
-		g_main_loop_quit(main_loop);
-		break;
-	}
+    g_main_loop_quit(main_loop);
+    break;
+  }
 }
 
 static VALUE init(VALUE self, VALUE debug, VALUE path)
@@ -378,15 +378,15 @@ static VALUE init(VALUE self, VALUE debug, VALUE path)
   purple_debug_set_enabled((debug == Qnil || debug == Qfalse) ? FALSE : TRUE);
 
   if (path != Qnil) {
-		purple_util_set_user_dir(RSTRING(path)->ptr);
-	}
+    purple_util_set_user_dir(RSTRING(path)->ptr);
+  }
 
   purple_core_set_ui_ops(&core_uiops);
   purple_eventloop_set_ui_ops(&glib_eventloops);
   
   if (!purple_core_init(UI_ID)) {
-		rb_raise(rb_eRuntimeError, "libpurple initialization failed");
-	}
+    rb_raise(rb_eRuntimeError, "libpurple initialization failed");
+  }
 
   /* Create and load the buddylist. */
   purple_set_blist(purple_blist_new());
@@ -441,8 +441,8 @@ static VALUE watch_signed_on_event(VALUE self)
 {
   set_callback(&signed_on_handler, "signed_on_handler");
   int handle;
-	purple_signal_connect(purple_connections_get_handle(), "signed-on", &handle,
-				PURPLE_CALLBACK(signed_on), NULL);
+  purple_signal_connect(purple_connections_get_handle(), "signed-on", &handle,
+        PURPLE_CALLBACK(signed_on), NULL);
   return signed_on_handler;
 }
 
@@ -454,8 +454,8 @@ static VALUE watch_connection_error(VALUE self)
   set_callback(&connection_error_handler, "connection_error_handler");
   
   /*int handle;
-	purple_signal_connect(purple_connections_get_handle(), "connection-error", &handle,
-				PURPLE_CALLBACK(connection_error), NULL);*/
+  purple_signal_connect(purple_connections_get_handle(), "connection-error", &handle,
+        PURPLE_CALLBACK(connection_error), NULL);*/
   return connection_error_handler;
 }
 
@@ -499,91 +499,91 @@ static void _read_socket_handler(gpointer notused, int socket, PurpleInputCondit
 static void _accept_socket_handler(gpointer notused, int server_socket, PurpleInputCondition condition)
 {
   /* Check that it is a read condition */
-	if (condition != PURPLE_INPUT_READ)
-		return;
-		
-	struct sockaddr_in their_addr; /* connector's address information */
-	socklen_t sin_size = sizeof(struct sockaddr);
-	int client_socket;
+  if (condition != PURPLE_INPUT_READ)
+    return;
+    
+  struct sockaddr_in their_addr; /* connector's address information */
+  socklen_t sin_size = sizeof(struct sockaddr);
+  int client_socket;
   if ((client_socket = accept(server_socket, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
     purple_debug_warning("purple_ruby", "failed to accept %d: %d\n", client_socket, errno);
-		return;
-	}
-	
-	int flags = fcntl(client_socket, F_GETFL);
-	fcntl(client_socket, F_SETFL, flags | O_NONBLOCK);
+    return;
+  }
+  
+  int flags = fcntl(client_socket, F_GETFL);
+  fcntl(client_socket, F_SETFL, flags | O_NONBLOCK);
 #ifndef _WIN32
-	fcntl(client_socket, F_SETFD, FD_CLOEXEC);
+  fcntl(client_socket, F_SETFD, FD_CLOEXEC);
 #endif
 
   purple_debug_info("purple_ruby", "new connection: %d\n", client_socket);
-	
-	guint purple_fd = purple_input_add(client_socket, PURPLE_INPUT_READ, _read_socket_handler, NULL);
-	
-	g_hash_table_insert(data_hash_table, (gpointer)client_socket, (gpointer)rb_str_new2(""));
-	g_hash_table_insert(fd_hash_table, (gpointer)client_socket, (gpointer)purple_fd);
+  
+  guint purple_fd = purple_input_add(client_socket, PURPLE_INPUT_READ, _read_socket_handler, NULL);
+  
+  g_hash_table_insert(data_hash_table, (gpointer)client_socket, (gpointer)rb_str_new2(""));
+  g_hash_table_insert(fd_hash_table, (gpointer)client_socket, (gpointer)purple_fd);
 }
 
 static VALUE watch_incoming_ipc(VALUE self, VALUE serverip, VALUE port)
 {
-	struct sockaddr_in my_addr;
-	int soc;
-	int on = 1;
+  struct sockaddr_in my_addr;
+  int soc;
+  int on = 1;
 
-	/* Open a listening socket for incoming conversations */
-	if ((soc = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		rb_raise(rb_eRuntimeError, "Cannot open socket: %s\n", g_strerror(errno));
-		return Qnil;
-	}
+  /* Open a listening socket for incoming conversations */
+  if ((soc = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+  {
+    rb_raise(rb_eRuntimeError, "Cannot open socket: %s\n", g_strerror(errno));
+    return Qnil;
+  }
 
-	if (setsockopt(soc, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
-	{
-		rb_raise(rb_eRuntimeError, "SO_REUSEADDR failed: %s\n", g_strerror(errno));
-		return Qnil;
-	}
+  if (setsockopt(soc, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+  {
+    rb_raise(rb_eRuntimeError, "SO_REUSEADDR failed: %s\n", g_strerror(errno));
+    return Qnil;
+  }
 
-	memset(&my_addr, 0, sizeof(struct sockaddr_in));
-	my_addr.sin_family = AF_INET;
-	my_addr.sin_addr.s_addr = inet_addr(RSTRING(serverip)->ptr);
-	my_addr.sin_port = htons(FIX2INT(port));
-	if (bind(soc, (struct sockaddr*)&my_addr, sizeof(struct sockaddr)) != 0)
-	{
-		rb_raise(rb_eRuntimeError, "Unable to bind to port %d: %s\n", (int)FIX2INT(port), g_strerror(errno));
-		return Qnil;
-	}
+  memset(&my_addr, 0, sizeof(struct sockaddr_in));
+  my_addr.sin_family = AF_INET;
+  my_addr.sin_addr.s_addr = inet_addr(RSTRING(serverip)->ptr);
+  my_addr.sin_port = htons(FIX2INT(port));
+  if (bind(soc, (struct sockaddr*)&my_addr, sizeof(struct sockaddr)) != 0)
+  {
+    rb_raise(rb_eRuntimeError, "Unable to bind to port %d: %s\n", (int)FIX2INT(port), g_strerror(errno));
+    return Qnil;
+  }
 
-	/* Attempt to listen on the bound socket */
-	if (listen(soc, 10) != 0)
-	{
-		rb_raise(rb_eRuntimeError, "Cannot listen on socket: %s\n", g_strerror(errno));
-		return Qnil;
-	}
+  /* Attempt to listen on the bound socket */
+  if (listen(soc, 10) != 0)
+  {
+    rb_raise(rb_eRuntimeError, "Cannot listen on socket: %s\n", g_strerror(errno));
+    return Qnil;
+  }
 
   set_callback(&ipc_handler, "ipc_handler");
   
-	/* Open a watcher in the socket we have just opened */
-	purple_input_add(soc, PURPLE_INPUT_READ, _accept_socket_handler, NULL);
-	
-	return port;
+  /* Open a watcher in the socket we have just opened */
+  purple_input_add(soc, PURPLE_INPUT_READ, _accept_socket_handler, NULL);
+  
+  return port;
 }
 
 static gboolean
 do_timeout(gpointer data)
 {
-	VALUE handler = data;
-	check_callback(handler, "timer_handler");
-	VALUE v = rb_funcall(handler, CALL, 0, 0);
-	return (v == Qtrue);
+  VALUE handler = data;
+  check_callback(handler, "timer_handler");
+  VALUE v = rb_funcall(handler, CALL, 0, 0);
+  return (v == Qtrue);
 }
 
 static VALUE watch_timer(VALUE self, VALUE delay)
 {
-	set_callback(&timer_handler, "timer_handler");
-	if (timer_timeout != 0)
-		g_source_remove(timer_timeout);
-	timer_timeout = g_timeout_add(delay, do_timeout, timer_handler);
-	return delay;
+  set_callback(&timer_handler, "timer_handler");
+  if (timer_timeout != 0)
+    g_source_remove(timer_timeout);
+  timer_timeout = g_timeout_add(delay, do_timeout, timer_handler);
+  return delay;
 }
 
 static VALUE login(VALUE self, VALUE protocol, VALUE username, VALUE password)
@@ -596,9 +596,9 @@ static VALUE login(VALUE self, VALUE protocol, VALUE username, VALUE password)
   purple_account_set_remember_password(account, TRUE);
   purple_account_set_enabled(account, UI_ID, TRUE);
   PurpleSavedStatus *status = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE);
-	purple_savedstatus_activate(status);
-	
-	return Data_Wrap_Struct(cAccount, NULL, NULL, account);
+  purple_savedstatus_activate(status);
+  
+  return Data_Wrap_Struct(cAccount, NULL, NULL, account);
 }
 
 static VALUE main_loop_run(VALUE self)
@@ -687,15 +687,15 @@ static VALUE list_protocols(VALUE self)
   
   GList *iter = purple_plugins_get_protocols();
   int i;
-	for (i = 0; iter; iter = iter->next) {
-		PurplePlugin *plugin = iter->data;
-		PurplePluginInfo *info = plugin->info;
-		if (info && info->name) {
-		  char s[256];
-			snprintf(s, sizeof(s) -1, "%s %s", info->id, info->name);
-			rb_ary_push(array, rb_str_new2(s));
-		}
-	}
+  for (i = 0; iter; iter = iter->next) {
+    PurplePlugin *plugin = iter->data;
+    PurplePluginInfo *info = plugin->info;
+    if (info && info->name) {
+      char s[256];
+      snprintf(s, sizeof(s) -1, "%s %s", info->id, info->name);
+      rb_ary_push(array, rb_str_new2(s));
+    }
+  }
   
   return array;
 }
@@ -705,15 +705,15 @@ static VALUE add_buddy(VALUE self, VALUE buddy)
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
   
-	PurpleBuddy* pb = purple_buddy_new(account, RSTRING(buddy)->ptr, NULL);
+  PurpleBuddy* pb = purple_buddy_new(account, RSTRING(buddy)->ptr, NULL);
   
   char* group = _("Buddies");
   PurpleGroup* grp = purple_find_group(group);
-	if (!grp)
-	{
-		grp = purple_group_new(group);
-		purple_blist_add_group(grp, NULL);
-	}
+  if (!grp)
+  {
+    grp = purple_group_new(group);
+    purple_blist_add_group(grp, NULL);
+  }
   
   purple_blist_add_buddy(pb, NULL, grp, NULL);
   purple_account_add_buddy(account, pb);
@@ -725,21 +725,21 @@ static VALUE remove_buddy(VALUE self, VALUE buddy)
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
   
-	PurpleBuddy* pb = purple_find_buddy(account, RSTRING(buddy)->ptr);
-	if (NULL == pb) {
-	  rb_raise(rb_eRuntimeError, "Failed to remove buddy for %s : %s does not exist", purple_account_get_username(account), RSTRING(buddy)->ptr);
-	}
-	
-	char* group = _("Buddies");
+  PurpleBuddy* pb = purple_find_buddy(account, RSTRING(buddy)->ptr);
+  if (NULL == pb) {
+    rb_raise(rb_eRuntimeError, "Failed to remove buddy for %s : %s does not exist", purple_account_get_username(account), RSTRING(buddy)->ptr);
+  }
+  
+  char* group = _("Buddies");
   PurpleGroup* grp = purple_find_group(group);
-	if (!grp)
-	{
-		grp = purple_group_new(group);
-		purple_blist_add_group(grp, NULL);
-	}
-	
-	purple_blist_remove_buddy(pb);
-	purple_account_remove_buddy(account, pb, grp);
+  if (!grp)
+  {
+    grp = purple_group_new(group);
+    purple_blist_add_group(grp, NULL);
+  }
+  
+  purple_blist_remove_buddy(pb);
+  purple_account_remove_buddy(account, pb, grp);
   return Qtrue;
 }
 
