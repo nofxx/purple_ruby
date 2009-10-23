@@ -125,7 +125,7 @@ const char* UI_ID = "purplegw";
 static GMainLoop *main_loop = NULL;
 static GHashTable* data_hash_table = NULL;
 static GHashTable* fd_hash_table = NULL;
-ID CALL;
+ID CALL, USER_DIR, DEBUG;
 extern PurpleAccountUiOps account_ops;
 
 static VALUE im_handler = Qnil;
@@ -366,8 +366,21 @@ static void sighandler(int sig)
 	}
 }
 
-static VALUE init(VALUE self, VALUE debug, VALUE path)
+static VALUE init(int argc, VALUE *argv, VALUE self)
 {
+  VALUE debug, path, settings;
+
+  rb_scan_args(argc, argv, "01", &settings);
+
+  if (argc == 0) {
+    debug = Qnil;
+    path = Qnil;
+  }
+  else {
+    debug = rb_hash_aref(settings, DEBUG);
+    path = rb_hash_aref(settings, USER_DIR);
+  }
+
   signal(SIGCHLD, SIG_IGN);
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT, sighandler);
@@ -375,11 +388,11 @@ static VALUE init(VALUE self, VALUE debug, VALUE path)
   data_hash_table = g_hash_table_new(NULL, NULL);
   fd_hash_table = g_hash_table_new(NULL, NULL);
 
-  purple_debug_set_enabled((debug == Qnil || debug == Qfalse) ? FALSE : TRUE);
+  purple_debug_set_enabled(RTEST(debug) ? TRUE : FALSE);
 
   if (path != Qnil) {
-		purple_util_set_user_dir(RSTRING(path)->ptr);
-	}
+    purple_util_set_user_dir(StringValueCStr(path));
+  }
 
   purple_core_set_ui_ops(&core_uiops);
   purple_eventloop_set_ui_ops(&glib_eventloops);
@@ -765,9 +778,12 @@ static VALUE acc_delete(VALUE self)
 void Init_purple_ruby() 
 {
   CALL = rb_intern("call");
+  DEBUG = rb_intern("debug");
+  USER_DIR = rb_intern("user_dir");
+  
 
   cPurpleRuby = rb_define_class("PurpleRuby", rb_cObject);
-  rb_define_singleton_method(cPurpleRuby, "init", init, 1);
+  rb_define_singleton_method(cPurpleRuby, "init", init, -1);
   rb_define_singleton_method(cPurpleRuby, "list_protocols", list_protocols, 0);
   rb_define_singleton_method(cPurpleRuby, "watch_signed_on_event", watch_signed_on_event, 0);
   rb_define_singleton_method(cPurpleRuby, "watch_connection_error", watch_connection_error, 0);
