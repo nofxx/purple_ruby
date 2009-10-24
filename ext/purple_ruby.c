@@ -377,6 +377,8 @@ static VALUE init(int argc, VALUE *argv, VALUE self)
     path = Qnil;
   }
   else {
+    settings = rb_convert_type(settings, T_HASH, "Hash", "to_hash");
+
     debug = rb_hash_aref(settings, ID2SYM(DEBUG));
     path = rb_hash_aref(settings, ID2SYM(USER_DIR));
   }
@@ -558,7 +560,7 @@ static VALUE watch_incoming_ipc(VALUE self, VALUE serverip, VALUE port)
 
 	memset(&my_addr, 0, sizeof(struct sockaddr_in));
 	my_addr.sin_family = AF_INET;
-	my_addr.sin_addr.s_addr = inet_addr(RSTRING(serverip)->ptr);
+	my_addr.sin_addr.s_addr = inet_addr(StringValueCStr(serverip));
 	my_addr.sin_port = htons(FIX2INT(port));
 	if (bind(soc, (struct sockaddr*)&my_addr, sizeof(struct sockaddr)) != 0)
 	{
@@ -601,17 +603,18 @@ static VALUE watch_timer(VALUE self, VALUE delay)
 
 static VALUE login(VALUE self, VALUE protocol, VALUE username, VALUE password)
 {
-  PurpleAccount* account = purple_account_new(RSTRING(username)->ptr, RSTRING(protocol)->ptr);
+  PurpleAccount* account = purple_account_new(StringValueCStr(username), StringValueCStr(protocol));
   if (NULL == account || NULL == account->presence) {
-    rb_raise(rb_eRuntimeError, "No able to create account: %s", RSTRING(protocol)->ptr);
+    rb_raise(rb_eRuntimeError, "No able to create account: %s", StringValueCStr(protocol));
   }
-  purple_account_set_password(account, RSTRING(password)->ptr);
+  
+  purple_account_set_password(account, StringValueCStr(password));
   purple_account_set_remember_password(account, TRUE);
   purple_account_set_enabled(account, UI_ID, TRUE);
   PurpleSavedStatus *status = purple_savedstatus_new(NULL, PURPLE_STATUS_AVAILABLE);
-	purple_savedstatus_activate(status);
+  purple_savedstatus_activate(status);
 	
-	return Data_Wrap_Struct(cAccount, NULL, NULL, account);
+  return Data_Wrap_Struct(cAccount, NULL, NULL, account);
 }
 
 static VALUE main_loop_run(VALUE self)
@@ -649,7 +652,7 @@ static VALUE send_im(VALUE self, VALUE name, VALUE message)
   Data_Get_Struct(self, PurpleAccount, account);
   
   if (purple_account_is_connected(account)) {
-    int i = serv_send_im(purple_account_get_connection(account), RSTRING(name)->ptr, RSTRING(message)->ptr, 0);
+    int i = serv_send_im(purple_account_get_connection(account), StringValueCStr(name), StringValueCStr(message), 0);
     return INT2FIX(i);
   } else {
     return Qnil;
@@ -681,8 +684,7 @@ static VALUE get_bool_setting(VALUE self, VALUE name, VALUE default_value)
 {
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
-  gboolean value = purple_account_get_bool(account, RSTRING(name)->ptr, 
-    (default_value == Qfalse || default_value == Qnil) ? FALSE : TRUE); 
+  gboolean value = purple_account_get_bool(account, StringValueCStr(name), RTEST(default_value) ? TRUE : FALSE); 
   return (TRUE == value) ? Qtrue : Qfalse;
 }
 
@@ -690,7 +692,7 @@ static VALUE get_string_setting(VALUE self, VALUE name, VALUE default_value)
 {
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
-  const char* value = purple_account_get_string(account, RSTRING(name)->ptr, RSTRING(default_value)->ptr);
+  const char* value = purple_account_get_string(account, StringValueCStr(name), StringValueCStr(default_value));
   return (NULL == value) ? Qnil : rb_str_new2(value);
 }
 
@@ -718,7 +720,7 @@ static VALUE add_buddy(VALUE self, VALUE buddy)
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
   
-	PurpleBuddy* pb = purple_buddy_new(account, RSTRING(buddy)->ptr, NULL);
+  PurpleBuddy* pb = purple_buddy_new(account, StringValueCStr(buddy), NULL);
   
   char* group = _("Buddies");
   PurpleGroup* grp = purple_find_group(group);
@@ -738,21 +740,22 @@ static VALUE remove_buddy(VALUE self, VALUE buddy)
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
   
-	PurpleBuddy* pb = purple_find_buddy(account, RSTRING(buddy)->ptr);
-	if (NULL == pb) {
-	  rb_raise(rb_eRuntimeError, "Failed to remove buddy for %s : %s does not exist", purple_account_get_username(account), RSTRING(buddy)->ptr);
-	}
+  PurpleBuddy* pb = purple_find_buddy(account, StringValueCStr(buddy));
+  if (NULL == pb) {
+    rb_raise(rb_eRuntimeError, "Failed to remove buddy for %s : %s does not exist", purple_account_get_username(account), StringValueCStr(buddy));
+  }
 	
-	char* group = _("Buddies");
+  char* group = _("Buddies");
   PurpleGroup* grp = purple_find_group(group);
-	if (!grp)
-	{
-		grp = purple_group_new(group);
-		purple_blist_add_group(grp, NULL);
-	}
+  if (!grp)
+    {
+      grp = purple_group_new(group);
+      purple_blist_add_group(grp, NULL);
+    }
 	
-	purple_blist_remove_buddy(pb);
-	purple_account_remove_buddy(account, pb, grp);
+  purple_blist_remove_buddy(pb);
+  purple_account_remove_buddy(account, pb, grp);
+
   return Qtrue;
 }
 
@@ -760,7 +763,7 @@ static VALUE has_buddy(VALUE self, VALUE buddy)
 {
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
-  if (purple_find_buddy(account, RSTRING(buddy)->ptr) != NULL) {
+  if (purple_find_buddy(account, StringValueCStr(buddy)) != NULL) {
     return Qtrue;
   } else {
     return Qfalse;
