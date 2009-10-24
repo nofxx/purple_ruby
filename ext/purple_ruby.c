@@ -377,8 +377,8 @@ static VALUE init(int argc, VALUE *argv, VALUE self)
     path = Qnil;
   }
   else {
-    debug = rb_hash_aref(settings, DEBUG);
-    path = rb_hash_aref(settings, USER_DIR);
+    debug = rb_hash_aref(settings, ID2SYM(DEBUG));
+    path = rb_hash_aref(settings, ID2SYM(USER_DIR));
   }
 
   signal(SIGCHLD, SIG_IGN);
