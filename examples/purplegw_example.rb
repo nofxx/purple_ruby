@@ -19,7 +19,7 @@ class PurpleGWExample
   SERVER_PORT = 9877
 
   def start configs
-    PurpleRuby.init false #use 'true' if you want to see the debug messages
+    PurpleRuby.init :debug => false, :user_dir => File.dirname(__FILE__) #use 'true' if you want to see the debug messages
     
     puts "Available protocols:", PurpleRuby.list_protocols
     
