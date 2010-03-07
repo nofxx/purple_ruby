@@ -119,7 +119,7 @@ static PurpleEventLoopUiOps glib_eventloops =
 	NULL
 };
 
-static VALUE cPurpleRuby;
+static VALUE cPurpleRuby, cProtocol;
 VALUE cAccount;
 const char* UI_ID = "purplegw";
 static GMainLoop *main_loop = NULL;
@@ -702,15 +702,11 @@ static VALUE list_protocols(VALUE self)
   
   GList *iter = purple_plugins_get_protocols();
   int i;
-	for (i = 0; iter; iter = iter->next) {
-		PurplePlugin *plugin = iter->data;
-		PurplePluginInfo *info = plugin->info;
-		if (info && info->name) {
-		  char s[256];
-			snprintf(s, sizeof(s) -1, "%s %s", info->id, info->name);
-			rb_ary_push(array, rb_str_new2(s));
-		}
-	}
+  for (i = 0; iter; iter = iter->next) {
+    puts("????");
+    VALUE protocol = Data_Wrap_Struct(cProtocol, NULL, NULL, iter->data);
+    rb_ary_push(array, protocol);
+  }
   
   return array;
 }
@@ -778,6 +774,22 @@ static VALUE acc_delete(VALUE self)
   return Qnil;
 }
 
+static VALUE protocol_to_s(VALUE self)
+{
+  PurplePlugin *protocol;
+  PurplePluginInfo *info;
+
+  Data_Get_Struct(self, PurplePlugin, protocol);
+  info = protocol->info;
+  if (info && info->name) {
+    char s[256];
+    snprintf(s, sizeof(s) -1, "%s %s", info->id, info->name);
+    return rb_str_new2(s);
+  }
+
+  return Qnil;
+}
+
 void Init_purple_ruby() 
 {
   CALL = rb_intern("call");
@@ -815,4 +827,9 @@ void Init_purple_ruby()
   rb_define_method(cAccount, "remove_buddy", remove_buddy, 1);
   rb_define_method(cAccount, "has_buddy?", has_buddy, 1);
   rb_define_method(cAccount, "delete", acc_delete, 0);
+
+  cProtocol = rb_define_class_under(cPurpleRuby, "Protocol", rb_cObject);
+  rb_define_method(cProtocol, "to_str", protocol_to_s, 0);
+  rb_define_method(cProtocol, "to_s", protocol_to_s, 0);
+
 }
