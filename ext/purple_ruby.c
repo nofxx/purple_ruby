@@ -18,6 +18,7 @@
  */
 
 #include <libpurple/account.h>
+#include <libpurple/accountopt.h>
 #include <libpurple/conversation.h>
 #include <libpurple/core.h>
 #include <libpurple/debug.h>
@@ -688,12 +689,43 @@ static VALUE get_bool_setting(VALUE self, VALUE name, VALUE default_value)
   return (TRUE == value) ? Qtrue : Qfalse;
 }
 
+static VALUE set_bool_setting(VALUE self, VALUE name, VALUE value) 
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  purple_account_set_bool(account, StringValueCStr(name), RTEST(value) ? TRUE : FALSE);
+  return value;
+}
+
+static VALUE get_int_setting(VALUE self, VALUE name, VALUE default_value)
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  return INT2FIX(purple_account_get_int(account, StringValueCStr(name), FIX2INT(default_value)));
+}
+
+static VALUE set_int_setting(VALUE self, VALUE name, VALUE value) 
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  purple_account_set_int(account, StringValueCStr(name), FIX2INT(value));
+  return value;
+}
+
 static VALUE get_string_setting(VALUE self, VALUE name, VALUE default_value)
 {
   PurpleAccount *account;
   Data_Get_Struct(self, PurpleAccount, account);
   const char* value = purple_account_get_string(account, StringValueCStr(name), StringValueCStr(default_value));
   return (NULL == value) ? Qnil : rb_str_new2(value);
+}
+
+static VALUE set_string_setting(VALUE self, VALUE name, VALUE value)
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  purple_account_set_string(account, StringValueCStr(name), StringValueCStr(value));
+  return value;
 }
 
 static VALUE list_protocols(VALUE self)
@@ -789,12 +821,73 @@ static VALUE protocol_to_s(VALUE self)
   return Qnil;
 }
 
-void Init_purple_ruby() 
+static VALUE protocol_get_id(VALUE self) 
+{
+  PurplePlugin *protocol;
+  PurplePluginInfo *info;
+
+  Data_Get_Struct(self, PurplePlugin, protocol);
+  info = protocol->info;
+  return info && info->id ? rb_str_new2(info->id) : Qnil;
+}
+
+static VALUE protocol_get_name(VALUE self)
+{
+  PurplePlugin *protocol;
+  PurplePluginInfo *info;
+
+  Data_Get_Struct(self, PurplePlugin, protocol);
+  info = protocol->info;
+  return info && info->name ? rb_str_new2(info->name) : Qnil;
+}
+
+static VALUE protocol_get_default_options(VALUE self)
+{
+  PurplePlugin *protocol;
+  PurplePluginProtocolInfo *prpl_info;
+  PurpleAccountOption *opt;
+  GList *opts;
+  const char *str_val;
+  VALUE h = rb_hash_new(), key, val;
+
+  Data_Get_Struct(self, PurplePlugin, protocol);
+  prpl_info = PURPLE_PLUGIN_PROTOCOL_INFO(protocol);
+  opts = prpl_info->protocol_options;
+  for (; opts; opts = opts->next) {
+    opt = (PurpleAccountOption *)opts->data;
+    key = rb_str_new2(opt->pref_name);
+    switch (opt->type)
+      {
+      case PURPLE_PREF_BOOLEAN:
+	val = purple_account_option_get_default_bool(opt) ? Qtrue : Qfalse;
+	break;
+      case PURPLE_PREF_INT:
+	val = INT2FIX(purple_account_option_get_default_int(opt));
+	break;
+      case PURPLE_PREF_STRING:
+	str_val = purple_account_option_get_default_string(opt);
+	val = str_val == NULL ? rb_str_new2("") : rb_str_new2(str_val);
+	break;
+      case PURPLE_PREF_STRING_LIST:
+	str_val = rb_str_new2(purple_account_option_get_default_list_value(opt));
+	val = str_val == NULL ? rb_str_new2("") : rb_str_new2(str_val);
+	break;
+      default:
+	key = Qnil;
+      }
+
+    if (key != Qnil)
+      rb_hash_aset(h, key, val);
+  }
+
+  return h;
+}
+
+void Init_purple_ruby_ext() 
 {
   CALL = rb_intern("call");
   DEBUG = rb_intern("debug");
   USER_DIR = rb_intern("user_dir");
-  
 
   cPurpleRuby = rb_define_class("PurpleRuby", rb_cObject);
   rb_define_singleton_method(cPurpleRuby, "init", init, -1);
@@ -821,13 +914,20 @@ void Init_purple_ruby()
   rb_define_method(cAccount, "protocol_id", protocol_id, 0);
   rb_define_method(cAccount, "protocol_name", protocol_name, 0);
   rb_define_method(cAccount, "get_bool_setting", get_bool_setting, 2);
+  rb_define_method(cAccount, "set_bool_setting", set_bool_setting, 2);
+  rb_define_method(cAccount, "get_int_setting", get_int_setting, 2);
+  rb_define_method(cAccount, "set_int_setting", set_int_setting, 2);
   rb_define_method(cAccount, "get_string_setting", get_string_setting, 2);
+  rb_define_method(cAccount, "set_string_setting", set_string_setting, 2);
   rb_define_method(cAccount, "add_buddy", add_buddy, 1);
   rb_define_method(cAccount, "remove_buddy", remove_buddy, 1);
   rb_define_method(cAccount, "has_buddy?", has_buddy, 1);
   rb_define_method(cAccount, "delete", acc_delete, 0);
 
   cProtocol = rb_define_class_under(cPurpleRuby, "Protocol", rb_cObject);
+  rb_define_method(cProtocol, "default_options", protocol_get_default_options, 0);
+  rb_define_method(cProtocol, "id", protocol_get_id, 0);
+  rb_define_method(cProtocol, "name", protocol_get_name, 0);
   rb_define_method(cProtocol, "to_str", protocol_to_s, 0);
   rb_define_method(cProtocol, "to_s", protocol_to_s, 0);
 
