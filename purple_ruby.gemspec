@@ -31,7 +31,6 @@ Gem::Specification.new do |s|
      "lib/purple_ruby.rb",
      "purple_ruby.gemspec",
      "spec/purple_ruby_spec.rb",
-     "spec/spec.opts",
      "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/nofxx/purple_ruby}

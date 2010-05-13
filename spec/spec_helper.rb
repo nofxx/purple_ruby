@@ -4,6 +4,8 @@ require 'purple_ruby'
 require 'spec'
 require 'spec/autorun'
 
+PurpleRuby.init :debug => false
+
 Spec::Runner.configure do |config|
-  
+
 end
