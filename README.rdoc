@@ -8,18 +8,21 @@ Why not "ruburple"? I have used ruburple ( http://rubyforge.org/projects/ruburpl
 
 == INSTALLATION
 
+Archlinux:
+---------------
+  $ pacman -S libpurple
+  $ gem install purple_ruby
+
 Ubuntu:
 ---------------
   $ sudo apt-get install libpurple0 libpurple-dev
-  $ gem sources -a http://gems.github.com (you only have to do this once)
-  $ sudo gem install Lipsiasoft-purple_ruby
+  $ sudo gem install purple_ruby
 
 Redhat/Centos
 ---------------
   $ wget -O /etc/yum.repos.d/pidgin.repo http://rpm.pidgin.im/centos/pidgin.repo
   $ yum -y install glib2-devel libpurple-devel
-  $ gem sources -a http://gems.github.com (you only have to do this once)
-  $ sudo gem install Lipsiasoft-purple_ruby
+  $ sudo gem install purple_ruby
 
 OSX:
 ----
