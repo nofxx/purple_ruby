@@ -53,6 +53,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.title = "purple_ruby #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
+  rdoc.rdoc_files.include('ext/**/*.c')
 end
 
 

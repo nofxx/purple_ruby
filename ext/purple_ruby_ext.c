@@ -647,6 +647,13 @@ static VALUE main_loop_stop(VALUE self)
   return Qnil;
 }
 
+/*
+ * call-seq:
+ * send_im(contact, message)
+ *
+ * Sends an IM message.
+ *
+ */
 static VALUE send_im(VALUE self, VALUE name, VALUE message)
 {
   PurpleAccount *account;
@@ -660,6 +667,10 @@ static VALUE send_im(VALUE self, VALUE name, VALUE message)
   }
 }
 
+/*
+ * Returns account username (String).
+ *
+ */
 static VALUE username(VALUE self)
 {
   PurpleAccount *account;
@@ -727,6 +738,33 @@ static VALUE set_string_setting(VALUE self, VALUE name, VALUE value)
   purple_account_set_string(account, StringValueCStr(name), StringValueCStr(value));
   return value;
 }
+
+/*
+ * call-seq:
+ * set_public_alias(nickname)
+ *
+ * Sets the public alias(nickname) of the account.
+ *
+ */
+static VALUE set_public_alias(VALUE self, VALUE value)
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  purple_account_set_public_alias(account, StringValueCStr(value), NULL, NULL);
+  return value;
+}
+
+/*
+ * Gets the public alias(nickname) of the account.
+ * TODO: async
+static VALUE get_public_alias(VALUE self)
+{
+  PurpleAccount *account;
+  Data_Get_Struct(self, PurpleAccount, account);
+  purple_account_get_public_alias(account, NULL, NULL);
+  return Qnil;
+}
+ */
 
 static VALUE list_protocols(VALUE self)
 {
@@ -889,6 +927,10 @@ void Init_purple_ruby_ext()
   DEBUG = rb_intern("debug");
   USER_DIR = rb_intern("user_dir");
 
+  /*
+   * Module PurpleRuby
+   *
+   */
   cPurpleRuby = rb_define_class("PurpleRuby", rb_cObject);
   rb_define_singleton_method(cPurpleRuby, "init", init, -1);
   rb_define_singleton_method(cPurpleRuby, "list_protocols", list_protocols, 0);
@@ -908,6 +950,10 @@ void Init_purple_ruby_ext()
   rb_define_const(cPurpleRuby, "NOTIFY_MSG_WARNING", INT2NUM(PURPLE_NOTIFY_MSG_WARNING));
   rb_define_const(cPurpleRuby, "NOTIFY_MSG_INFO", INT2NUM(PURPLE_NOTIFY_MSG_INFO));
 
+  /*
+   * Class Account
+   *
+   */
   cAccount = rb_define_class_under(cPurpleRuby, "Account", rb_cObject);
   rb_define_method(cAccount, "send_im", send_im, 2);
   rb_define_method(cAccount, "username", username, 0);
@@ -919,11 +965,17 @@ void Init_purple_ruby_ext()
   rb_define_method(cAccount, "set_int_setting", set_int_setting, 2);
   rb_define_method(cAccount, "get_string_setting", get_string_setting, 2);
   rb_define_method(cAccount, "set_string_setting", set_string_setting, 2);
+  rb_define_method(cAccount, "set_public_alias", set_public_alias, 1);
+  /* rb_define_method(cAccount, "get_public_alias", get_public_alias, 0); */
   rb_define_method(cAccount, "add_buddy", add_buddy, 1);
   rb_define_method(cAccount, "remove_buddy", remove_buddy, 1);
   rb_define_method(cAccount, "has_buddy?", has_buddy, 1);
   rb_define_method(cAccount, "delete", acc_delete, 0);
 
+  /*
+   * Class Protocol
+   *
+   */
   cProtocol = rb_define_class_under(cPurpleRuby, "Protocol", rb_cObject);
   rb_define_method(cProtocol, "default_options", protocol_get_default_options, 0);
   rb_define_method(cProtocol, "id", protocol_get_id, 0);
